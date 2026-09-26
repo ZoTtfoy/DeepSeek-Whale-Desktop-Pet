@@ -1,0 +1,19 @@
+{
+  "format": "whale-layered-1",
+  "name": "小鲸鱼 · 分层动态模型",
+  "layers": [
+    {"id":"back-hair","image":"parts.png","crop":[930,10,324,650],"frame":[115,15,147,263],"channel":"back-hair"},
+    {"id":"left-leg","image":"parts.png","crop":[575,950,160,304],"frame":[111,218,48,82],"channel":"left-leg"},
+    {"id":"right-leg","image":"parts.png","crop":[795,950,180,304],"frame":[160,218,48,82],"channel":"right-leg"},
+    {"id":"back-skirt","image":"parts.png","crop":[10,945,520,309],"frame":[61,196,180,98],"channel":"skirt"},
+    {"id":"torso","image":"parts.png","crop":[395,625,405,335],"frame":[91,145,118,129],"channel":"torso"},
+    {"id":"left-arm","image":"parts.png","crop":[70,665,180,275],"frame":[62,150,58,99],"channel":"left-arm"},
+    {"id":"right-arm","image":"parts.png","crop":[855,670,190,270],"frame":[184,150,58,99],"channel":"right-arm"},
+    {"id":"face","image":"face.png","crop":[300,0,954,1254],"frame":[93,20,166,180],"channel":"head","fadeLeft":0.10},
+    {"id":"left-eye","image":"parts.png","crop":[55,495,160,135],"frame":[93,106,37,35],"channel":"eye-open"},
+    {"id":"right-eye","image":"parts.png","crop":[245,495,160,135],"frame":[166,106,37,35],"channel":"eye-open"},
+    {"id":"left-blink","image":"parts.png","crop":[430,510,150,115],"frame":[94,112,39,27],"channel":"eye-closed"},
+    {"id":"right-blink","image":"parts.png","crop":[615,510,150,115],"frame":[165,112,39,27],"channel":"eye-closed"},
+    {"id":"front-hair","image":"bangs.png","crop":[0,0,1254,1254],"frame":[13,-27,280,263],"channel":"front-hair"}
+  ]
+}

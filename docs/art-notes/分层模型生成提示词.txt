@@ -1,0 +1,15 @@
+素材来源：以仓库原有鲸鱼娘立绘为外观参考，由 OpenAI imagegen 生成新的分层贴图。参考角色设计来自 MeteorNOX/DeepSeek-Balance-Whale-Widget；不声称角色设计完全独立原创。
+
+parts.png：
+Produce one transparent PNG chibi character rigging parts sheet from this existing standing whale maid. Lay out separate face/head, bangs, long back hair, eye open/closed pair, torso apron, both arms and hands, skirt and each leg on a clear transparent canvas. Maintain character identity/colors and fully painted overlap edges. No labels, checkerboard, background or shadows.
+
+face.png：
+Use case: precise-object-edit. Asset type: transparent layer for a 2D puppet rig. From the upper-left HEAD/FACE component of the referenced separated-parts sheet, produce only that same head/face as one large isolated cutout, keeping the exact face outline, whale-fin ears, white maid headband, cyan side bow, skin shading, eyebrows, blush, nose and small smile. REMOVE ONLY BOTH EYES AND EYELASHES completely; paint smooth matching skin where they were, so independently layered eye sprites can sit on top. Keep scale/proportions and blue outlines unchanged. No hair bangs, no torso, no other components. Genuine transparent alpha outside the head, centered on square canvas, no checkerboard/background/text.
+
+bangs.png：
+Extract only the blue FRONT HAIR / BANGS component located in the TOP CENTER of this transparent sprite sheet. Output that exact blue hair component by itself, fully painted and completed at all tips and edges, on a generous transparent square 1254x1254 canvas with at least 15% empty space around all sides. Do not include the face, whale fins, back hair, eyes, torso, arms, or any other parts from the sheet. Preserve the original deep blue outlines, periwinkle shading and glossy accents, but repair any cropped left edge so the hair silhouette is smooth and complete. This is a standalone production PNG sprite. Genuine alpha transparency outside hair (all four corner pixels alpha 0), no gray checkerboard or any painted background, no text.
+
+bangs.png 背景提取修正：
+Use case: background-extraction. Isolate the SINGLE blue hair cutout precisely as it is, changing absolutely no character pixels. Remove the entire gray-and-white checkerboard outside and INSIDE the hair opening, including every background artifact. Export a genuine RGBA PNG with alpha=0 for all background pixels, including corners and the central opening, and alpha=255 for hair. Preserve the full silhouette, original 1254x1254 canvas, placement, linework, colors and scale. No checkerboard pattern, no solid background, no shadow, no other elements.
+
+透明度已抽查：三张入库贴图的透明区域均为真实 alpha，舍弃了多次误带不透明棋盘格的候选图。模型画布、裁切和动作绑定在 app/models/whale-rig/model.json 与 app/分层角色模型.cs 中完成。

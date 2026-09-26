@@ -38,6 +38,22 @@ class VerifyNaturalPet {
    var foot=PetSprite.Deform(.5,.98,pose,m);Check(Math.Abs(foot.X-150)<.001&&Math.Abs(foot.Y-294)<.001,"Ground contact slides");samples++;
   }
   var app=new Application();var w=new WhaleWindow(true);var settings=(WhaleSettings)Get(w,"settings");
+  Check((string)Get(w,"currentPose")=="stand" && (PuppetModel)Get(w,"selectedPuppet")!=null,"Built-in layered model did not start in standing pose");
+  var model=PuppetModel.Load("work/models/whale-rig/model.json");Check(model.Pieces.Count>=10,"Layered model missing parts");
+  var invalid=new JavaScriptSerializer().Deserialize<PuppetDefinition>(File.ReadAllText("work/models/whale-rig/model.json"));
+  invalid.layers[0].image="..\\outside.png";
+  string invalidPath="work/models/whale-rig/invalid-model.json";File.WriteAllText(invalidPath,new JavaScriptSerializer().Serialize(invalid));
+  bool rejected=false;try{PuppetModel.Load(invalidPath);}catch(InvalidDataException){rejected=true;}Check(rejected,"Unsafe image path accepted");
+  Call(w,"ChooseModel",System.IO.Path.GetFullPath("work/models/whale-rig/model.json"));
+  Check((PuppetModel)Get(w,"selectedPuppet")!=null,"Replaceable model failed to activate");
+  Call(w,"RenderPet",4.0);Call(w,"RenderPet",5.0);Save(w,"layered-model-preview");
+  var openPixels=new byte[(int)(w.Width*w.Height*4)];Frame(w).CopyPixels(openPixels,(int)w.Width*4,0);
+  ((PetSprite)Get(w,"mascot")).Apply("stand",PetMotionEngine.Sample("stand","sleep",0,5));Save(w,"layered-blink-preview");
+  var closedPixels=new byte[openPixels.Length];Frame(w).CopyPixels(closedPixels,(int)w.Width*4,0);
+  int changed=0;for(int i=0;i<openPixels.Length;i++)if(openPixels[i]!=closedPixels[i])changed++;
+  Check(changed>500,"Layered blink did not change the visible face");
+  Call(w,"RenderPet",5.1);
+  Call(w,"ChooseModel","");Check((PuppetModel)Get(w,"selectedPuppet")==null,"Classic model failed to restore");
   settings.AutoPose=false;settings.HideDataPanel=true;Set(w,"nextAmbient",10000.0);Call(w,"BuildMenus");
   var sprite=(PetSprite)Get(w,"mascot");
   Call(w,"CompleteSpeech");((Border)Get(w,"speech")).Visibility=Visibility.Collapsed;Call(w,"UpdateLayoutMetrics");
@@ -80,7 +96,7 @@ class VerifyNaturalPet {
    for(int i=0;i<108;i++){Call(w,"RenderPet",start+i/30.0);gif.Frames.Add(Frame(w));}
   }
   using(var f=File.Create("work/natural-motion-preview.gif"))gif.Save(f);PatchGif("work/natural-motion-preview.gif");
-  Console.WriteLine("PASS: "+samples+" motion samples; mesh triangles/contact; damping at 30/120 Hz; alpha renders; immediate click tiers; sleep/wake; quiet mode; charge cleanup; "+layouts+" layouts. Offline only, no API requests.");w.Close();app.Shutdown();
+  Console.WriteLine("PASS: "+samples+" motion samples; layered model load/selection and path validation; mesh triangles/contact; damping at 30/120 Hz; alpha renders; immediate click tiers; sleep/wake; quiet mode; charge cleanup; "+layouts+" layouts. Offline only, no API requests.");w.Close();app.Shutdown();
  }
  static void PatchGif(string path){byte[] g=File.ReadAllBytes(path);int n=0;for(int i=0;i+7<g.Length;i++)if(g[i]==33&&g[i+1]==249&&g[i+2]==4&&g[i+7]==0){g[i+3]=(byte)((g[i+3]&227)|8);g[i+4]=(byte)(n++%3==2?4:3);g[i+5]=0;}int at=13;if((g[10]&128)!=0)at+=3*(1<<((g[10]&7)+1));byte[] loop={33,255,11,78,69,84,83,67,65,80,69,50,46,48,3,1,0,0,0};using(var s=File.Create(path)){s.Write(g,0,at);s.Write(loop,0,loop.Length);s.Write(g,at,g.Length-at);}}
 }

@@ -32,7 +32,7 @@ namespace DeepSeekWhaleWpf
 
     internal struct PetMotion
     {
-        public double X,Y,Angle,ScaleX,ScaleY,HeadAngle,HeadY,Hair,Breath,Limb;
+        public double X,Y,Angle,ScaleX,ScaleY,HeadAngle,HeadY,Hair,Breath,Limb,Blink;
         public bool Closed;
     }
     internal static class PetMotionEngine
@@ -45,26 +45,38 @@ namespace DeepSeekWhaleWpf
             // Deterministic, irregular intervals; no metronomic double blink every cycle.
             double cycle=Math.Floor(clock/13.7),blink=clock-cycle*13.7;
             double first=2.8+.65*Math.Sin(cycle*2.39),second=8.7+.9*Math.Sin(cycle*1.71);
+            double naturalBlink=Math.Max(BlinkCurve(blink,first,.13),BlinkCurve(blink,second,.16));
             var m=new PetMotion { X=0,ScaleX=.92,ScaleY=.92,
                 Breath=.9*breath,HeadY=-.35*breath,
                 HeadAngle=.45*Math.Sin(clock*.73)+.18*Math.Sin(clock*1.13),
                 Hair=.7*Math.Sin(clock*.73-.6)+.25*Math.Sin(clock*1.31),
                 Limb=(pose=="prone"?1.2:.35)*Math.Sin(clock*.95-.8),
-                Closed=(blink>first&&blink<first+.13)||(blink>second&&blink<second+.16) };
-            if(action=="sleep") {m.Closed=true;m.HeadAngle=-1.4;m.Breath=.8*Math.Sin(clock*1.1);return m;}
+                Blink=naturalBlink,Closed=(blink>first&&blink<first+.13)||(blink>second&&blink<second+.16) };
+            if(action=="sleep") {m.Closed=true;m.Blink=1;m.HeadAngle=-1.4;m.Breath=.8*Math.Sin(clock*1.1);return m;}
             if(String.IsNullOrEmpty(action)) return m;
             double t=Math.Max(0,Math.Min(1,elapsed/Duration(pose,action)));
             double envelope=Math.Pow(Math.Sin(Math.PI*t),2);
             if(t>=1) return m;
-            if(action=="shy") { m.HeadAngle-=3.2*envelope;m.HeadY+=2.2*envelope;m.Angle=-.65*envelope;m.Closed=t>.26&&t<.70; }
+            if(action=="shy") { m.HeadAngle-=3.2*envelope;m.HeadY+=2.2*envelope;m.Angle=-.65*envelope;m.Closed=t>.26&&t<.70;m.Blink=Math.Max(m.Blink,SoftWindow(t,.26,.70,.07)); }
             else if(action=="annoyed") {m.HeadAngle+=2.7*Math.Sin(t*Math.PI*4)*envelope;m.Angle=.35*Math.Sin(t*Math.PI*4)*envelope;}
-            else if(action=="pet") {m.HeadY+=1.6*envelope;m.HeadAngle-=2.5*envelope;m.Closed=t>.16&&t<.78;m.Limb+=1.8*envelope;}
+            else if(action=="pet") {m.HeadY+=1.6*envelope;m.HeadAngle-=2.5*envelope;m.Closed=t>.16&&t<.78;m.Blink=Math.Max(m.Blink,SoftWindow(t,.16,.78,.07));m.Limb+=1.8*envelope;}
             else if(action=="charge") {m.HeadY-=2.4*envelope;m.HeadAngle+=1.5*envelope;m.Limb-=2.5*envelope;}
             else if(action=="hop" && pose!="prone") {Jump(ref m,t,pose=="stand"?12:5);m.HeadY+=1.8*Math.Sin(t*Math.PI*3)*envelope;}
             else if(action=="tilt") {m.HeadAngle+=(pose=="prone"?2.2:-3)*envelope;m.Angle=-.4*envelope;}
             else {m.HeadY-=1.8*envelope;m.Limb+=(pose=="prone"?4:1.6)*Math.Sin(t*Math.PI*2)*envelope;m.Breath+=1.2*envelope;}
             m.Hair+=1.4*Math.Sin(t*Math.PI*2-.5)*envelope;
             return m;
+        }
+        private static double BlinkCurve(double clock,double start,double duration)
+        {
+            double t=(clock-start)/duration;
+            return t<=0||t>=1?0:Math.Sin(Math.PI*t);
+        }
+        private static double SoftWindow(double t,double start,double end,double edge)
+        {
+            double a=Math.Max(0,Math.Min(1,(t-start)/edge));
+            double b=Math.Max(0,Math.Min(1,(end-t)/edge));
+            return Math.Min(a*a*(3-2*a),b*b*(3-2*b));
         }
         private static void Jump(ref PetMotion m,double t,double height)
         {

@@ -12,6 +12,10 @@ namespace DeepSeekWhaleWpf
     {
         const int Segments = 24;
         readonly MeshGeometry3D mesh = new MeshGeometry3D();
+        readonly Grid host = new Grid();
+        readonly Viewport3D viewport;
+        Viewbox puppetBox;
+        PuppetModel puppetModel;
         readonly DrawingBrush texture;
         readonly ImageDrawing currentFrame=new ImageDrawing {Rect=new Rect(0,0,300,300)};
         readonly ImageDrawing previousFrame=new ImageDrawing {Rect=new Rect(0,0,300,300)};
@@ -29,7 +33,7 @@ namespace DeepSeekWhaleWpf
         {
             var drawing=new DrawingGroup();drawing.Children.Add(currentFrame);previousLayer.Children.Add(previousFrame);drawing.Children.Add(previousLayer);
             texture=new DrawingBrush(drawing) {Stretch=Stretch.Fill,ViewboxUnits=BrushMappingMode.Absolute,Viewbox=new Rect(0,0,300,300)};
-            var viewport = new Viewport3D { ClipToBounds=false, IsHitTestVisible=false };
+            viewport = new Viewport3D { ClipToBounds=false, IsHitTestVisible=false };
             viewport.Camera = new OrthographicCamera(new Point3D(150,150,10),new Vector3D(0,0,-1),new Vector3D(0,1,0),300);
             for(int y=0;y<=Segments;y++) for(int x=0;x<=Segments;x++) {
                 mesh.Positions.Add(new Point3D(300.0*x/Segments,300-300.0*y/Segments,0));
@@ -45,7 +49,19 @@ namespace DeepSeekWhaleWpf
             var material=new DiffuseMaterial(texture);
             viewport.Children.Add(new ModelVisual3D {Content=new AmbientLight(Colors.White)});
             viewport.Children.Add(new ModelVisual3D { Content=new GeometryModel3D(mesh,material) });
-            Child=viewport;
+            host.Children.Add(viewport);
+            Child=host;
+        }
+        public void UsePuppet(PuppetModel model)
+        {
+            if(Object.ReferenceEquals(puppetModel,model))return;
+            puppetModel=model;
+            if(puppetBox!=null)host.Children.Remove(puppetBox);
+            puppetBox=null;
+            if(model==null) {viewport.Visibility=Visibility.Visible;return;}
+            viewport.Visibility=Visibility.Hidden;
+            puppetBox=new Viewbox { Stretch=Stretch.Fill,IsHitTestVisible=false,Child=new PuppetVisual(model) };
+            host.Children.Add(puppetBox);
         }
         protected override HitTestResult HitTestCore(PointHitTestParameters hit)
         { return new PointHitTestResult(this,hit.HitPoint); }
@@ -81,6 +97,7 @@ namespace DeepSeekWhaleWpf
         }
         public void Apply(string pose,PetMotion motion)
         {
+            if(puppetModel!=null) {((PuppetVisual)puppetBox.Child).Apply(motion);return;}
             // Detach while editing to avoid a render invalidation for every vertex.
             var points=mesh.Positions; mesh.Positions=null;
             for(int y=0;y<=Segments;y++)for(int x=0;x<=Segments;x++) {
