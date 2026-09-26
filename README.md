@@ -2,6 +2,8 @@
 
 运行在 Windows 桌面上的鲸鱼娘：查询 DeepSeek 账户余额、提醒扣费，并通过文字气泡陪你聊天。独立运行，无需 DSH。
 
+> **AI 生成声明：**本项目的程序代码、文档和鲸鱼娘角色立绘主要由 AI 生成，并根据项目作者提出的需求迭代。角色形象的参考来源见下文“参考与素材说明”。
+
 **[下载 Windows 版](https://github.com/ZoTtfoy/DeepSeek-Whale-Desktop-Pet/releases/latest)** · [使用说明](docs/使用说明.md)
 
 <img src="docs/images/chat.png" alt="桌宠对话界面，使用模拟对话展示" width="300">
@@ -53,3 +55,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1
 功能参考 [VPet](https://github.com/LorisYounger/VPet) 与 [BongoCat](https://github.com/ayangweb/BongoCat) 的桌宠交互体验。项目起点参考 [DeepSeek-Balance-Whale-Widget](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget)。当前角色以该项目形象为参考生成重绘；生成说明保留在 `docs/art-notes`。
 
 不将参考项目的代码许可证延伸到角色美术。角色素材权利不等同于程序源码许可；本仓库当前未另行指定开源许可证。公开源码不表示授予所有素材的商用或再分发许可。
+
