@@ -1,0 +1,10 @@
+/dist/
+/work/
+*.exe
+*.pdb
+*.zip
+settings.json
+*.user
+.vs/
+.env
+.env.*

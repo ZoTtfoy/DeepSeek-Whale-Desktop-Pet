@@ -53,4 +53,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\test.ps1
 功能参考 [VPet](https://github.com/LorisYounger/VPet) 与 [BongoCat](https://github.com/ayangweb/BongoCat) 的桌宠交互体验。项目起点参考 [DeepSeek-Balance-Whale-Widget](https://github.com/MeteorNOX/DeepSeek-Balance-Whale-Widget)。当前角色以该项目形象为参考生成重绘；生成说明保留在 `docs/art-notes`。
 
 不将参考项目的代码许可证延伸到角色美术。角色素材权利不等同于程序源码许可；本仓库当前未另行指定开源许可证。公开源码不表示授予所有素材的商用或再分发许可。
-
