@@ -1,4 +1,4 @@
-param([string]$Version='1.0.0')
+param([string]$Version='1.1.0')
 $ErrorActionPreference='Stop'
 if($Version -notmatch '^\d+\.\d+\.\d+([-.][A-Za-z0-9.]+)?$'){throw 'Invalid version'}
 $appDir=Join-Path $PSScriptRoot 'app'
@@ -17,6 +17,8 @@ if($LASTEXITCODE -ne 0){throw 'Compilation failed'}
 Get-ChildItem -LiteralPath $appDir -Filter '*.exe.config' | Copy-Item -Destination "$stage\DeepSeekWhale.exe.config" -Force
 New-Item -ItemType Directory -Path "$stage\poses" -Force | Out-Null
 Get-ChildItem -LiteralPath "$appDir\poses" -File | Copy-Item -Destination "$stage\poses" -Force
+New-Item -ItemType Directory -Path "$stage\models\whale-rig" -Force | Out-Null
+Get-ChildItem -LiteralPath "$appDir\models\whale-rig" -File | Copy-Item -Destination "$stage\models\whale-rig" -Force
 Get-ChildItem -LiteralPath "$PSScriptRoot\docs" -Filter '*.md' | Copy-Item -Destination $stage -Force
 Copy-Item -LiteralPath "$PSScriptRoot\RELEASE_NOTES.md" -Destination "$stage\README.md" -Force
 $archive=Join-Path $dist "DeepSeekWhale-v$Version-Windows.zip"

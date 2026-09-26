@@ -31,6 +31,7 @@ namespace DeepSeekWhaleStandalone
         public bool HideInput { get; set; }
         public bool QuietMode { get; set; }
         public int TargetFps { get; set; }
+        public string ModelPath { get; set; }
         public int WindowX { get; set; }
         public int WindowY { get; set; }
         public string LedgerDate { get; set; }
@@ -50,6 +51,7 @@ namespace DeepSeekWhaleStandalone
             PetPose = "sit";
             AutoPose = true;
             TargetFps = 120;
+            ModelPath = "builtin";
             Previous = new Dictionary<string, string>();
             Spent = new Dictionary<string, string>();
             UsageDays = new Dictionary<string, Dictionary<string, string>>();

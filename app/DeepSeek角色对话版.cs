@@ -35,6 +35,10 @@ namespace DeepSeekWhaleWpf
         private readonly Forms.ContextMenuStrip trayMenu = new Forms.ContextMenuStrip();
         private readonly ContextMenu widgetMenu = new ContextMenu();
         private readonly PetSprite mascot = new PetSprite();
+        private PuppetModel selectedPuppet;
+        private string selectedModel = "builtin";
+        private MenuItem builtInModelItem,layeredModelItem;
+        private Forms.ToolStripMenuItem trayBuiltInModelItem,trayLayeredModelItem;
         private readonly Border bubble = new Border();
         private readonly Grid scene = new Grid();
         private readonly Border bubbleShadow = new Border();
@@ -203,6 +207,12 @@ namespace DeepSeekWhaleWpf
             currentPose = poseImages.ContainsKey(settings.PetPose) ? settings.PetPose : "sit";
             eyesOpen = poseImages[currentPose][0]; eyesClosed = poseImages[currentPose][1];
             mascot.Source = eyesOpen;
+            LoadSelectedModel(false);
+            if(selectedModel=="builtin" && settings.AutoPose && poseImages.ContainsKey("stand")) {
+                currentPose="stand";
+                eyesOpen=poseImages[currentPose][0]; eyesClosed=poseImages[currentPose][1];
+                mascot.Source=eyesOpen;
+            }
             animationClock.Start();
             if (mascot.Source == null) status = "角色图片未打包，仍可从托盘查询";
             root.Children.Add(departingMascot);
@@ -606,6 +616,21 @@ namespace DeepSeekWhaleWpf
 
         private void BuildMenus()
         {
+            var modelMenu=new MenuItem { Header="角色模型" };
+            var modelTray=new Forms.ToolStripMenuItem("角色模型");
+            builtInModelItem=new MenuItem {Header="经典三姿态立绘",IsCheckable=true};
+            layeredModelItem=new MenuItem {Header="鲸鱼娘分层动态模型",IsCheckable=true};
+            trayBuiltInModelItem=new Forms.ToolStripMenuItem("经典三姿态立绘");
+            trayLayeredModelItem=new Forms.ToolStripMenuItem("鲸鱼娘分层动态模型");
+            builtInModelItem.Click+=(s,e)=>ChooseModel("");
+            layeredModelItem.Click+=(s,e)=>ChooseModel("builtin");
+            trayBuiltInModelItem.Click+=(s,e)=>Dispatcher.BeginInvoke(new Action(()=>ChooseModel("")));
+            trayLayeredModelItem.Click+=(s,e)=>Dispatcher.BeginInvoke(new Action(()=>ChooseModel("builtin")));
+            modelMenu.Items.Add(builtInModelItem);modelMenu.Items.Add(layeredModelItem);
+            modelTray.DropDownItems.Add(trayBuiltInModelItem);modelTray.DropDownItems.Add(trayLayeredModelItem);
+            var pick=new MenuItem {Header="加载其他分层模型…"};pick.Click+=(s,e)=>PickModel();modelMenu.Items.Add(pick);
+            var trayPick=new Forms.ToolStripMenuItem("加载其他分层模型…");trayPick.Click+=(s,e)=>Dispatcher.BeginInvoke(new Action(PickModel));modelTray.DropDownItems.Add(trayPick);
+            widgetMenu.Items.Add(modelMenu);trayMenu.Items.Add(modelTray);UpdateModelChecks();
             AddCompanionToggle("安静陪伴 · 减少小动作",()=>settings.QuietMode,()=> {settings.QuietMode=!settings.QuietMode;queuedAction="";});
             AddCompanionToggle("让她小睡 / 唤醒",()=>sleeping,()=>SetSleeping(!sleeping));
             AddCompanionToggle("锁定桌宠位置",()=>settings.LockPosition,()=>settings.LockPosition=!settings.LockPosition);
@@ -691,6 +716,44 @@ namespace DeepSeekWhaleWpf
             trayItem.Click += (s, e) => Dispatcher.BeginInvoke(action);
             trayMenu.Items.Add(trayItem);
         }
+        private string BuiltinModelFile {get{return System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"models","whale-rig","model.json");}}
+        private void LoadSelectedModel(bool showError)
+        {
+            // Older settings files have no ModelPath; start them with the new built-in rig.
+            selectedModel=settings.ModelPath==null?"builtin":String.IsNullOrWhiteSpace(settings.ModelPath)?"":settings.ModelPath;
+            selectedPuppet=null;
+            if(selectedModel.Length==0)return;
+            try {selectedPuppet=PuppetModel.Load(selectedModel=="builtin"?BuiltinModelFile:selectedModel);}
+            catch(Exception ex) {
+                if(showError)MessageBox.Show(this,ex.Message,"模型无法加载",MessageBoxButton.OK,MessageBoxImage.Warning);
+                selectedModel="";settings.ModelPath="";
+            }
+        }
+        private void UpdateModelChecks()
+        {
+            if(builtInModelItem!=null)builtInModelItem.IsChecked=selectedModel=="";
+            if(layeredModelItem!=null)layeredModelItem.IsChecked=selectedModel=="builtin";
+            if(trayBuiltInModelItem!=null)trayBuiltInModelItem.Checked=selectedModel=="";
+            if(trayLayeredModelItem!=null)trayLayeredModelItem.Checked=selectedModel=="builtin";
+        }
+        private void ChooseModel(string path)
+        {
+            string previous=settings.ModelPath;
+            settings.ModelPath=path;LoadSelectedModel(true);
+            if(path.Length>0 && selectedPuppet==null){settings.ModelPath=previous;LoadSelectedModel(false);return;}
+            if(selectedPuppet!=null && selectedModel!="builtin") {
+                settings.AutoPose=false;settings.PetPose="stand";pendingPose="stand";
+            }
+            else if(selectedModel=="builtin" && !sleeping) pendingPose="stand";
+            mascot.UsePuppet(selectedPuppet!=null&&(currentPose=="stand" || selectedModel!="builtin")?selectedPuppet:null);
+            UpdateModelChecks();UpdatePoseChecks();
+            try{SaveState();}catch(Exception){}
+        }
+        private void PickModel()
+        {
+            var dialog=new Microsoft.Win32.OpenFileDialog { Title="选择分层角色模型",Filter="分层模型 (model.json)|model.json",FileName="model.json",CheckFileExists=true };
+            if(dialog.ShowDialog(this)==true)ChooseModel(dialog.FileName);
+        }
 
         private void AddCompanionToggle(string label,Func<bool> read,Action change)
         {
@@ -705,8 +768,9 @@ namespace DeepSeekWhaleWpf
         private void SetSleeping(bool value)
         {
             sleeping=value;activeAction="";queuedAction="";nextAmbient=animationClock.Elapsed.TotalSeconds+25;
-            if(value) pendingPose="prone";
-            else pendingPose=settings.AutoPose?"sit":settings.PetPose;
+            if(selectedPuppet!=null && selectedModel!="builtin") pendingPose="stand";
+            else if(value) pendingPose="prone";
+            else pendingPose=settings.AutoPose?(selectedModel=="builtin"?"stand":"sit"):settings.PetPose;
             RefreshCompanionChecks();
             if(!chatBusy) {SetSpeechContext(null);ShowSpeech(value?"我趴着眯一会儿。余额我会继续帮你留意，轻轻点我就能叫醒我。":"唔…醒啦！我在听，你说吧。",true,false);}
         }
@@ -1279,6 +1343,10 @@ namespace DeepSeekWhaleWpf
 
         private void ChoosePose(string pose)
         {
+            if(selectedPuppet!=null && selectedModel!="builtin" && pose!="stand") {
+                if(!chatBusy){SetSpeechContext(null);ShowSpeech("这个模型只有站姿。切换回经典立绘后，就能选坐姿或趴姿啦。",true,false);}
+                return;
+            }
             sleeping=false;RefreshCompanionChecks();
             settings.AutoPose = pose == "auto";
             if(settings.AutoPose) pendingPose="";
@@ -1291,7 +1359,9 @@ namespace DeepSeekWhaleWpf
 
         private bool ChangePose(string pose, double now)
         {
+            if(selectedPuppet!=null && selectedModel!="builtin" && pose!="stand") return false;
             if (!poseImages.ContainsKey(pose) || pose == currentPose) return false;
+            departingMascot.UsePuppet(selectedPuppet!=null&&(currentPose=="stand" || selectedModel!="builtin")?selectedPuppet:null);
             departingMascot.Source = mascot.Source;
             departingMascot.Apply(currentPose,displayedMotion);
             departingMascot.RenderTransformOrigin = mascot.RenderTransformOrigin;
@@ -1370,6 +1440,7 @@ namespace DeepSeekWhaleWpf
             motion.Angle=softAngle.Step(motion.Angle*strength,dt,12);
             motion.Breath*=strength;
             displayedMotion=motion;
+            mascot.UsePuppet(selectedPuppet!=null&&(currentPose=="stand" || selectedModel!="builtin")?selectedPuppet:null);
             mascot.Apply(currentPose,motion);
             var frame=motion.Closed ? eyesClosed : eyesOpen;
             if(mascot.Source!=frame) mascot.Source=frame;
@@ -1382,7 +1453,7 @@ namespace DeepSeekWhaleWpf
             dissolve=dissolve*dissolve*(3-2*dissolve);
             mascot.Opacity=dissolve;
             departingMascot.Opacity=1-dissolve;
-            if(u>=1) departingMascot.Source=null;
+            if(u>=1) {departingMascot.Source=null;departingMascot.UsePuppet(null);}
             idleBreath.ScaleX=motion.ScaleX*(.994+.006*eased);
             idleBreath.ScaleY=motion.ScaleY*(.985+.015*eased);
             bodyRotation.Angle=motion.Angle;
