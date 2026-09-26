@@ -29,6 +29,8 @@
 
 模型替换步骤与格式见 [可替换分层角色模型](docs/分层模型格式.md)。新模型是自有二维分层格式，不是 Live2D Cubism；Cubism 的 `.model3.json`／`.moc3` 目前不能直接加载。
 
+为后续 Cubism 绑定准备的 13 图层 PSD，可用 `tools/export_cubism_psd.py` 从现有贴图导出；步骤见 [Cubism 编辑器素材交接](docs/Cubism编辑器交接.md)。PSD 是待绑定素材，不是已经完成的 Live2D 模型。
+
 API 聊天会产生费用。扣费金额为两次成功查询之间的余额差额，不是逐笔账单。程序没有服务端中转；密钥仅用于 DeepSeek 官方 API，记住密钥时使用 Windows DPAPI 加密。设置位于当前用户的 `%LOCALAPPDATA%\DeepSeekWhaleStandalone\settings.json`。不要将自己的设置文件提交到仓库。
 
 ## 动画预览
